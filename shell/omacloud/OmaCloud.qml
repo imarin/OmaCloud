@@ -16,6 +16,11 @@ BarWidget {
 
   readonly property string home: Quickshell.env("HOME")
   readonly property string statusFile: home + "/.local/state/omacloud/status.json"
+  readonly property bool spanish: {
+    var loc = Quickshell.env("LC_ALL") || Quickshell.env("LANG") || "en";
+    return loc.substring(0, 2) === "es";
+  }
+  readonly property var str: root.spanish ? {lastSync: "Último sync", openDrive: "Abrir Drive"} : {lastSync: "Last sync", openDrive: "Open Drive"}
 
   function refresh() {
     if (!readProc.running) {
@@ -45,7 +50,7 @@ BarWidget {
   }
 
   function statusTip() {
-    var tip = "OmaCloud: " + root.syncStatus + "\nÚltimo sync: " + root.lastSync
+    var tip = "OmaCloud: " + root.syncStatus + "\n" + root.str.lastSync + ": " + root.lastSync
     if (root.syncStatus === "error" && root.lastError !== "") tip += "\n" + root.lastError
     return tip
   }
@@ -107,7 +112,7 @@ BarWidget {
       text: "\uf07b"
       slotSize: Style.bar.statusSlot
       fontSize: Style.font.caption
-      tooltipText: "Abrir Drive"
+      tooltipText: root.str.openDrive
       onPressed: root.openFolder()
     }
   }
