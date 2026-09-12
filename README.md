@@ -14,6 +14,10 @@ decisiones viven en el board Kanban `omacloud`.
 - `shell/` — plugin Omarchy (`manifest.json` + QML): estado sync, acciones
 - `docs/` — visión, decisiones (ADR), roadmap
 
+## Instalación
+
+Ver [INSTALL.md](INSTALL.md) — guía punta a punta (rclone, OAuth, servicio, widget).
+
 ## Requisitos previos
 
 - Omarchy (Arch Linux + Hyprland + Quickshell)
