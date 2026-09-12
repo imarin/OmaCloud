@@ -20,6 +20,16 @@ git clone https://github.com/imarin/OmaCloud.git
 Esto crea `~/OmaCloud` con el código (los pasos 5 y 6 entran ahí con
 `cd ~/OmaCloud`).
 
+Vía rápida (clona y ejecuta el instalador):
+
+```bash
+git clone https://github.com/imarin/OmaCloud.git ~/OmaCloud && ~/OmaCloud/install.sh
+```
+
+El script es idempotente y bilingüe (ES/EN según tu locale); detecta lo
+ya instalado y solo configura lo faltante. El auth OAuth abre el
+navegador una vez.
+
 ## 1. rclone
 
 ```bash
