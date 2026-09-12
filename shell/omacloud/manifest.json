@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "omacloud",
+  "name": "OmaCloud",
+  "version": "0.1.0",
+  "author": "Ismael Marin",
+  "description": "Google Drive sync status (rclone backend)",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "OmaCloud.qml"
+  },
+  "barWidget": {
+    "displayName": "OmaCloud",
+    "description": "Drive sync status: force sync, open folder",
+    "category": "System",
+    "allowMultiple": false
+  }
+}
