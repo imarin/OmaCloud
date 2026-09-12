@@ -35,7 +35,8 @@ BarWidget {
     menuTitle: "OmaCloud",
     forceSync: "Sincronizar ahora",
     open: "Abrir Drive",
-    frequency: "Frecuencia de sync (min)",
+    frequency: "Frecuencia de sync, min (0 = manual)",
+    manual: "manual",
     apiKeys: "Claves API de Google",
     idPh: "Client ID",
     secretPh: "Client secret",
@@ -46,7 +47,7 @@ BarWidget {
     reconnectOk: "Autorización completa.",
     reconnectFail: "Falló. Revisa el navegador e inténtalo de nuevo.",
     freqOk: "Frecuencia actualizada.",
-    freqFail: "No se pudo cambiar (1–120)."
+    freqFail: "No se pudo cambiar (0–120)."
   } : {
     lastSync: "Last sync",
     openDrive: "Open Drive",
@@ -54,7 +55,8 @@ BarWidget {
     menuTitle: "OmaCloud",
     forceSync: "Sync now",
     open: "Open Drive",
-    frequency: "Sync frequency (min)",
+    frequency: "Sync frequency, min (0 = manual)",
+    manual: "manual",
     apiKeys: "Google API keys",
     idPh: "Client ID",
     secretPh: "Client secret",
@@ -65,7 +67,7 @@ BarWidget {
     reconnectOk: "Authorization complete.",
     reconnectFail: "Failed. Check the browser and try again.",
     freqOk: "Frequency updated.",
-    freqFail: "Could not change (1–120)."
+    freqFail: "Could not change (0–120)."
   }
 
   function refresh() {
@@ -278,6 +280,7 @@ BarWidget {
       }
 
       Button {
+        width: parent.width
         text: root.str.forceSync
         onClicked: {
           root.menuOpen = false
@@ -286,6 +289,7 @@ BarWidget {
       }
 
       Button {
+        width: parent.width
         text: root.str.open
         onClicked: {
           root.menuOpen = false
@@ -294,22 +298,19 @@ BarWidget {
       }
 
       Text {
-        text: root.str.frequency + " (" + root.interval + ")"
+        text: root.str.frequency + ": " + (root.interval === "0" ? root.str.manual : root.interval)
         color: Color.foreground
         font.family: Style.font.family
         font.pixelSize: Style.font.caption
       }
 
-      Row {
-        spacing: Style.space(6)
-        Repeater {
-          model: [2, 5, 15, 30]
-          Button {
-            required property int modelData
-            text: String(modelData)
-            onClicked: root.setInterval(modelData)
-          }
-        }
+      Slider {
+        width: parent.width
+        from: 0
+        to: 30
+        stepSize: 1
+        value: parseInt(root.interval) || 0
+        onMoved: root.setInterval(Math.round(value))
       }
 
       Text {

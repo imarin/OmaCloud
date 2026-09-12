@@ -15,17 +15,28 @@ CONF="$HOME/.config/rclone/rclone.conf"
 cmd="${1:-}"
 case "$cmd" in
   get-interval)
-    grep -oP 'OnUnitActiveSec=\K[0-9]+' "$TIMER" 2>/dev/null || echo 15
+    if ! systemctl --user is-enabled --quiet omacloud-bisync.timer 2>/dev/null; then
+      echo 0
+    else
+      grep -oP 'OnUnitActiveSec=\K[0-9]+' "$TIMER" 2>/dev/null || echo 15
+    fi
     ;;
   set-interval)
     n="${2:-}"
-    if ! [[ "$n" =~ ^[0-9]+$ ]] || [ "$n" -lt 1 ] || [ "$n" -gt 120 ]; then
+    if ! [[ "$n" =~ ^[0-9]+$ ]] || [ "$n" -gt 120 ]; then
       echo "ERR_RANGE"
       exit 1
+    fi
+    if [ "$n" -eq 0 ]; then
+      systemctl --user disable --quiet omacloud-bisync.timer 2>/dev/null
+      systemctl --user stop omacloud-bisync.timer 2>/dev/null
+      echo 0
+      exit 0
     fi
     [ -f "$TIMER" ] || { echo "ERR_NOTIMER"; exit 1; }
     sed -i "s/^OnUnitActiveSec=.*/OnUnitActiveSec=${n}min/" "$TIMER"
     systemctl --user daemon-reload
+    systemctl --user enable --quiet omacloud-bisync.timer
     systemctl --user restart omacloud-bisync.timer
     echo "$n"
     ;;
