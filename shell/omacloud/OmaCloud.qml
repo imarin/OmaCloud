@@ -17,6 +17,7 @@ BarWidget {
   property string lastError: ""
   property bool menuOpen: false
   property string interval: "?"
+  property int freqPreview: -1
   property string menuMsg: ""
   property string keysId: ""
   property string keysSecret: ""
@@ -279,26 +280,32 @@ BarWidget {
         font.bold: true
       }
 
-      Button {
+      Row {
         width: parent.width
-        text: root.str.forceSync
-        onClicked: {
-          root.menuOpen = false
-          root.forceSync()
+        spacing: Style.space(6)
+        Button {
+          width: (parent.width - Style.space(6)) / 2
+          text: root.str.forceSync
+          onClicked: {
+            root.menuOpen = false
+            root.forceSync()
+          }
         }
-      }
-
-      Button {
-        width: parent.width
-        text: root.str.open
-        onClicked: {
-          root.menuOpen = false
-          root.openFolder()
+        Button {
+          width: (parent.width - Style.space(6)) / 2
+          text: root.str.open
+          onClicked: {
+            root.menuOpen = false
+            root.openFolder()
+          }
         }
       }
 
       Text {
-        text: root.str.frequency + ": " + (root.interval === "0" ? root.str.manual : root.interval)
+        text: {
+          var v = root.freqPreview >= 0 ? root.freqPreview : root.interval
+          return root.str.frequency + ": " + (String(v) === "0" ? root.str.manual : v)
+        }
         color: Color.foreground
         font.family: Style.font.family
         font.pixelSize: Style.font.caption
@@ -309,8 +316,15 @@ BarWidget {
         from: 0
         to: 30
         stepSize: 1
-        value: parseInt(root.interval) || 0
-        onMoved: root.setInterval(Math.round(value))
+        value: root.freqPreview >= 0 ? root.freqPreview : (parseInt(root.interval) || 0)
+        onMoved: root.freqPreview = Math.round(value)
+        onPressedChanged: {
+          if (!pressed && root.freqPreview >= 0) {
+            var v = root.freqPreview
+            root.freqPreview = -1
+            root.setInterval(v)
+          }
+        }
       }
 
       Text {
