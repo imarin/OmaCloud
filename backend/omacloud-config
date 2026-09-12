@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# omacloud-config: get/set de configuración sin editar archivos a mano.
+# Salida pensada para máquinas (el widget la traduce):
+#   get-interval  -> número (minutos)
+#   set-interval N -> número aplicado | ERR_RANGE
+#   set-keys      -> lee CLIENT_ID y CLIENT_SECRET por stdin (2 líneas);
+#                    imprime SAVED_OK | SAVED_NEEDS_AUTH | ERR_EMPTY
+# Las claves nunca van por argv (visibles en `ps`): entran por stdin.
+set -u
+
+TIMER="$HOME/.config/systemd/user/omacloud-bisync.timer"
+ENV_FILE="$HOME/.config/omacloud/.env"
+CONF="$HOME/.config/rclone/rclone.conf"
+
+cmd="${1:-}"
+case "$cmd" in
+  get-interval)
+    grep -oP 'OnUnitActiveSec=\K[0-9]+' "$TIMER" 2>/dev/null || echo 15
+    ;;
+  set-interval)
+    n="${2:-}"
+    if ! [[ "$n" =~ ^[0-9]+$ ]] || [ "$n" -lt 1 ] || [ "$n" -gt 120 ]; then
+      echo "ERR_RANGE"
+      exit 1
+    fi
+    [ -f "$TIMER" ] || { echo "ERR_NOTIMER"; exit 1; }
+    sed -i "s/^OnUnitActiveSec=.*/OnUnitActiveSec=${n}min/" "$TIMER"
+    systemctl --user daemon-reload
+    systemctl --user restart omacloud-bisync.timer
+    echo "$n"
+    ;;
+  set-keys)
+    IFS= read -r kid || kid=""
+    IFS= read -r ksecret || ksecret=""
+    if [ -z "$kid" ] || [ -z "$ksecret" ]; then
+      echo "ERR_EMPTY"
+      exit 1
+    fi
+    OMACLOUD_CID="$kid" OMACLOUD_CSEC="$ksecret" \
+    OMACLOUD_ENV="$ENV_FILE" OMACLOUD_CONF="$CONF" python3 - <<'EOF'
+import configparser, os
+env_path = os.environ["OMACLOUD_ENV"]
+cid = os.environ["OMACLOUD_CID"]
+csec = os.environ["OMACLOUD_CSEC"]
+os.makedirs(os.path.dirname(env_path), exist_ok=True)
+lines, seen = [], set()
+if os.path.exists(env_path):
+    with open(env_path) as f:
+        for line in f:
+            s = line.strip()
+            if s.startswith("OMACLOUD_CLIENT_ID="):
+                lines.append(f"OMACLOUD_CLIENT_ID={cid}\n"); seen.add("id")
+            elif s.startswith("OMACLOUD_CLIENT_SECRET="):
+                lines.append(f"OMACLOUD_CLIENT_SECRET={csec}\n"); seen.add("sec")
+            else:
+                lines.append(line)
+if "id" not in seen:
+    lines.append(f"OMACLOUD_CLIENT_ID={cid}\n")
+if "sec" not in seen:
+    lines.append(f"OMACLOUD_CLIENT_SECRET={csec}\n")
+with open(env_path, "w") as f:
+    f.writelines(lines)
+os.chmod(env_path, 0o600)
+cp = configparser.ConfigParser(interpolation=None)
+cp.optionxform = str
+cp.read(os.environ["OMACLOUD_CONF"])
+cp["OmaCloud"]["client_id"] = cid
+cp["OmaCloud"]["client_secret"] = csec
+with open(os.environ["OMACLOUD_CONF"], "w") as f:
+    cp.write(f)
+EOF
+    unset kid ksecret
+    if rclone lsd OmaCloud: >/dev/null 2>&1; then
+      echo "SAVED_OK"
+    else
+      echo "SAVED_NEEDS_AUTH"
+    fi
+    ;;
+  *)
+    echo "uso: get-interval | set-interval MINUTOS | set-keys" >&2
+    exit 2
+    ;;
+esac
