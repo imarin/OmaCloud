@@ -13,11 +13,12 @@ del tamaño de tu Drive).
 ## 0. Clonar el repo
 
 ```bash
+cd ~
 git clone https://github.com/imarin/OmaCloud.git
 ```
 
-Esto crea la carpeta `OmaCloud` con el código (los pasos 5 y 6 entran en
-ella con `cd OmaCloud`).
+Esto crea `~/OmaCloud` con el código (los pasos 5 y 6 entran ahí con
+`cd ~/OmaCloud`).
 
 ## 1. rclone
 
@@ -78,7 +79,7 @@ con `rclone config reconnect OmaCloud:` (responde `y`, `y`, `n`).
 Vista en vivo en `~/Drive` + réplica local sincronizada cada 15 min:
 
 ```bash
-cd OmaCloud
+cd ~/OmaCloud
 cp backend/omacloud-bisync ~/.local/bin/ && chmod +x ~/.local/bin/omacloud-bisync
 cp backend/*.service backend/*.timer ~/.config/systemd/user/
 systemctl --user daemon-reload
@@ -92,7 +93,7 @@ cat ~/.local/state/omacloud/status.json   # {"status":"ok",...}
 ## 6. Widget de barra
 
 ```bash
-cd OmaCloud
+cd ~/OmaCloud
 omarchy plugin validate ./shell/omacloud
 mkdir -p ~/.config/omarchy/plugins
 ln -sfn "$PWD/shell/omacloud" ~/.config/omarchy/plugins/omacloud
