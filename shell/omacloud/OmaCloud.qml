@@ -250,12 +250,13 @@ BarWidget {
   }
 
   PopupCard {
+    id: menuPopup
     anchorItem: cloudBtn
     owner: root
     bar: root.bar
     open: root.menuOpen
-    contentWidth: fittedContentWidth(Style.space(300))
-    contentHeight: fittedContentHeight(menuColumn.implicitHeight)
+    contentWidth: Style.space(300)
+    contentHeight: menuPopup.fittedContentHeight(menuColumn.implicitHeight)
 
     Column {
       id: menuColumn
