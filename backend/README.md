@@ -35,8 +35,8 @@ systemctl --user enable --now omacloud-mount.service omacloud-bisync.timer
 - `bisync` **aborta** (no borra) si un lado queda vacío o si detecta
   cambios que requieren `--resync`; en ese caso `status.json` queda en
   `error` con el motivo y hay que intervenir manualmente.
-- Sin `client_id` propio (ver tarjeta bloqueada en kanban) se usa el
-  compartido de rclone hasta que Google lo retire en 2026.
+- OAuth client_id propio configurado y verificado (2026-09-12); el
+  compartido de rclone ya no se usa.
 - Secretos (`~/.config/omacloud/.env`, permisos 600, **fuera del repo**):
   `OMACLOUD_CLIENT_ID` / `OMACLOUD_CLIENT_SECRET` más overrides
   opcionales (`OMACLOUD_REMOTE`, `OMACLOUD_REPLICA`). El wrapper los
