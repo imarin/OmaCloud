@@ -137,6 +137,10 @@ BarWidget {
     return tip
   }
 
+  // Sin binding open<->menuOpen: el popup rompe bindings al cerrarse solo
+  // (foco fuera); se sincroniza manual en ambas direcciones.
+  onMenuOpenChanged: menuPopup.open = root.menuOpen
+
   implicitWidth: row.implicitWidth
   implicitHeight: row.implicitHeight
 
@@ -254,9 +258,11 @@ BarWidget {
     anchorItem: cloudBtn
     owner: root
     bar: root.bar
-    open: root.menuOpen
     contentWidth: Style.space(300)
     contentHeight: menuPopup.fittedContentHeight(menuColumn.implicitHeight)
+    onOpenChanged: {
+      if (!open) root.menuOpen = false
+    }
 
     Column {
       id: menuColumn
