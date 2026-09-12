@@ -1,29 +1,29 @@
 # OmaCloud
 
-Cliente de Google Drive para [Omarchy](https://omarchy.org/).
+Cliente de Google Drive para [Omarchy](https://omarchy.org/). Combina
+sincronización con `rclone` (mount + bi-sync) y un widget de barra
+Quickshell (QML) para estado y acciones.
 
-**Arquitectura decidida:** híbrida — backend de sincronización con `rclone`
-(mount + bi-sync) + widget de barra Quickshell (QML) para estado y acciones.
+**Estado: v1 funcional.** Monta tu Drive en `~/Drive`, mantiene una
+réplica local sincronizada cada 15 min como servicio de usuario, y muestra
+el estado en la barra (click nube = forzar sync, click carpeta = abrir
+Drive).
 
-**Estado:** fundación. Sin implementación todavía. El roadmap y las
-decisiones viven en el board Kanban `omacloud`.
+## Estructura
 
-## Estructura prevista (no implementada aún)
-
-- `backend/` — servicio rclone: mount, bi-sync, auth OAuth
-- `shell/` — plugin Omarchy (`manifest.json` + QML): estado sync, acciones
-- `docs/` — visión, decisiones (ADR), roadmap
+- `backend/` — wrapper `omacloud-bisync` + units systemd (mount, bisync, timer)
+- `shell/omacloud/` — plugin Omarchy (`manifest.json` + QML)
+- `docs/` — visión, decisiones (ADR), roadmap, nota del spike rclone
+- `INSTALL.md` — guía de instalación punta a punta
 
 ## Instalación
 
-Ver [INSTALL.md](INSTALL.md) — guía punta a punta (rclone, OAuth, servicio, widget).
+Ver [INSTALL.md](INSTALL.md): rclone, OAuth con client_id propio,
+servicio y widget.
 
-## Requisitos previos
+## Requisitos
 
 - Omarchy (Arch Linux + Hyprland + Quickshell)
-- `rclone` (aún no instalado — ver roadmap)
-- Cuenta de Google con acceso a Drive API / OAuth
-
-## Estado
-
-Proyecto en fase de fundación, sin implementación todavía.
+- `rclone`
+- Cuenta de Google con acceso a Drive (se usa un OAuth client_id propio;
+  detalles en INSTALL.md)

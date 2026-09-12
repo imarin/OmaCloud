@@ -8,7 +8,8 @@ del tamaño de tu Drive).
 
 - Omarchy (Arch Linux + Hyprland + Quickshell).
 - Cuenta de Google con acceso a Drive.
-- Este repo clonado (p. ej. en `~/Proyectos/OmaCloud`).
+- Este repo clonado en tu máquina. En esta guía `<repo>` es el
+  directorio donde lo clonaste.
 
 ## 1. rclone
 
@@ -69,7 +70,7 @@ con `rclone config reconnect OmaCloud:` (responde `y`, `y`, `n`).
 Vista en vivo en `~/Drive` + réplica local sincronizada cada 15 min:
 
 ```bash
-cd ~/Proyectos/OmaCloud
+cd <repo>
 cp backend/omacloud-bisync ~/.local/bin/ && chmod +x ~/.local/bin/omacloud-bisync
 cp backend/*.service backend/*.timer ~/.config/systemd/user/
 systemctl --user daemon-reload
@@ -83,7 +84,7 @@ cat ~/.local/state/omacloud/status.json   # {"status":"ok",...}
 ## 6. Widget de barra
 
 ```bash
-cd ~/Proyectos/OmaCloud
+cd <repo>
 omarchy plugin validate ./shell/omacloud
 mkdir -p ~/.config/omarchy/plugins
 ln -sfn "$PWD/shell/omacloud" ~/.config/omarchy/plugins/omacloud
