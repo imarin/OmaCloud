@@ -20,7 +20,6 @@ decisiones viven en el board Kanban `omacloud`.
 - `rclone` (aún no instalado — ver roadmap)
 - Cuenta de Google con acceso a Drive API / OAuth
 
-## Desarrollo
+## Estado
 
-Sesiones con Hermes Agent. Board Kanban: `omacloud`
-(`hermes kanban --board omacloud list`).
+Proyecto en fase de fundación, sin implementación todavía.
