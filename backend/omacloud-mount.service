@@ -1,5 +1,5 @@
 [Unit]
-Description=OmaCloud: monta Google Drive en ~/Drive
+Description=OmaCloud: mount Google Drive at ~/Drive
 After=network-online.target
 Wants=network-online.target
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=OmaCloud: sincroniza réplica local <-> Drive (oneshot)
+Description=OmaCloud: sync local replica <-> Drive (oneshot)
 
 [Service]
 Type=oneshot

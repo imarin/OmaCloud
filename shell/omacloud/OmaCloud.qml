@@ -49,8 +49,15 @@ BarWidget {
     return "\uf0c2"
   }
 
+  function statusWord() {
+    if (root.syncStatus === "syncing") return root.spanish ? "sincronizando" : "syncing";
+    if (root.syncStatus === "error") return "error";
+    if (root.syncStatus === "ok") return "ok";
+    return root.spanish ? "desconocido" : "unknown";
+  }
+
   function statusTip() {
-    var tip = "OmaCloud: " + root.syncStatus + "\n" + root.str.lastSync + ": " + root.lastSync
+    var tip = "OmaCloud: " + root.statusWord() + "\n" + root.str.lastSync + ": " + root.lastSync
     if (root.syncStatus === "error" && root.lastError !== "") tip += "\n" + root.lastError
     return tip
   }

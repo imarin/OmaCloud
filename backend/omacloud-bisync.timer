@@ -1,5 +1,5 @@
 [Unit]
-Description=OmaCloud: bisync periódico cada 15 minutos
+Description=OmaCloud: periodic bisync every 15 minutes
 
 [Timer]
 OnBootSec=5min
