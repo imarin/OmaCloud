@@ -1,71 +1,72 @@
-# Instalación — OmaCloud v1
+# Install — OmaCloud v1
 
-Cliente de Google Drive para Omarchy: `rclone` (mount + bisync) + widget
-de barra. Tiempo estimado: 20–30 min (la primera sincronización depende
-del tamaño de tu Drive).
+Google Drive client for Omarchy: `rclone` (mount + bisync) + bar widget.
+Estimated time: 20–30 min (first sync depends on your Drive size).
 
-## Requisitos
+[Guía en español](INSTALL.es.md).
+
+## Requirements
 
 - Omarchy (Arch Linux + Hyprland + Quickshell).
-- Cuenta de Google con acceso a Drive.
-- `git` instalado.
+- Google account with Drive access.
+- `git` installed.
 
-## 0. Clonar el repo
+## 0. Clone the repo
 
 ```bash
 cd ~
 git clone https://github.com/imarin/OmaCloud.git
 ```
 
-Esto crea `~/OmaCloud` con el código (los pasos 5 y 6 entran ahí con
+This creates `~/OmaCloud` with the code (steps 5 and 6 enter it with
 `cd ~/OmaCloud`).
 
-Vía rápida (clona y ejecuta el instalador):
+Quick way (clone and run the installer):
 
 ```bash
 git clone https://github.com/imarin/OmaCloud.git ~/OmaCloud && ~/OmaCloud/install.sh
 ```
 
-El script es idempotente y bilingüe (ES/EN según tu locale); detecta lo
-ya instalado y solo configura lo faltante. El auth OAuth abre el
-navegador una vez.
+The script is idempotent and bilingual (ES/EN per your locale); it detects
+what is already installed and only configures the rest. OAuth auth opens
+the browser once.
 
 ## 1. rclone
 
 ```bash
-omarchy pkg add rclone   # o: sudo pacman -S rclone
+omarchy pkg add rclone   # or: sudo pacman -S rclone
 rclone version
 ```
 
-## 2. Credenciales OAuth propias (Google Cloud Console)
+## 2. Your own OAuth credentials (Google Cloud Console)
 
-rclone trae un `client_id` compartido en retirada; usa uno propio:
+rclone ships a shared `client_id` that is being retired; use your own:
 
-1. Crea un proyecto en [Google Cloud Console](https://console.cloud.google.com/).
-2. **APIs y servicios → Biblioteca**: habilita **Google Drive API**.
-3. **APIs y servicios → Pantalla de consentimiento OAuth**: app en modo
-   *Prueba*, agrégate como **test user** con tu cuenta de Gmail.
-4. **APIs y servicios → Credenciales → Crear credenciales → ID de cliente
-   OAuth** (tipo *App de escritorio*). Anota client_id y client_secret.
-   - Sin el test user verás `Error 403: access_denied`.
-   - Si un intento denegado se queda "pegado", revócalo en
+1. Create a project at [Google Cloud Console](https://console.cloud.google.com/).
+2. **APIs & Services → Library**: enable **Google Drive API**.
+3. **APIs & Services → OAuth consent screen**: app in *Testing* mode, add
+   yourself as a **test user** with your Gmail account.
+4. **APIs & Services → Credentials → Create Credentials → OAuth client ID**
+   (type *Desktop app*). Note the client_id and client_secret.
+   - Without the test user you will see `Error 403: access_denied`.
+   - If a denied attempt gets "stuck", revoke it at
      [myaccount.google.com/permissions](https://myaccount.google.com/permissions)
-     y reintenta.
+     and retry.
 
-## 3. Secretos locales
+## 3. Local secrets
 
 ```bash
 mkdir -p ~/.config/omacloud
 cat > ~/.config/omacloud/.env <<EOF
-OMACLOUD_CLIENT_ID=tu-client-id
-OMACLOUD_CLIENT_SECRET=tu-client-secret
+OMACLOUD_CLIENT_ID=your-client-id
+OMACLOUD_CLIENT_SECRET=your-client-secret
 EOF
 chmod 600 ~/.config/omacloud/.env
 ```
 
-Este archivo vive **fuera del repo** y nunca se commitea.
+This file lives **outside the repo** and is never committed.
 
-## 4. Remote rclone + autorización
+## 4. rclone remote + authorization
 
 ```bash
 set -a; . ~/.config/omacloud/.env; set +a
@@ -74,19 +75,19 @@ rclone config create OmaCloud drive \
 unset OMACLOUD_CLIENT_ID OMACLOUD_CLIENT_SECRET
 ```
 
-Responde `y` (usar navegador), `n` (no es Shared Drive) y autoriza en el
-navegador. Verifica:
+Answer `y` (use browser), `n` (not a Shared Drive) and authorize in the
+browser. Verify:
 
 ```bash
 rclone lsd OmaCloud:
 ```
 
-Nota: si alguna vez cambias las claves o el token se invalida, re-autoriza
-con `rclone config reconnect OmaCloud:` (responde `y`, `y`, `n`).
+Note: if you ever rotate the keys or the token is invalidated, re-authorize
+with `rclone config reconnect OmaCloud:` (answer `y`, `y`, `n`).
 
-## 5. Backend (servicio)
+## 5. Backend (service)
 
-Vista en vivo en `~/Drive` + réplica local sincronizada cada 15 min:
+Live view at `~/Drive` + local replica synced every 15 min:
 
 ```bash
 cd ~/OmaCloud
@@ -94,13 +95,13 @@ cp backend/omacloud-bisync ~/.local/bin/ && chmod +x ~/.local/bin/omacloud-bisyn
 cp backend/*.service backend/*.timer ~/.config/systemd/user/
 systemctl --user daemon-reload
 mkdir -p ~/.local/share/omacloud/replica
-rclone bisync ~/.local/share/omacloud/replica OmaCloud: --resync  # solo la primera vez
+rclone bisync ~/.local/share/omacloud/replica OmaCloud: --resync  # first time only
 systemctl --user enable --now omacloud-mount.service omacloud-bisync.timer
-ls ~/Drive   # tu Drive en vivo
+ls ~/Drive   # your live Drive
 cat ~/.local/state/omacloud/status.json   # {"status":"ok",...}
 ```
 
-## 6. Widget de barra
+## 6. Bar widget
 
 ```bash
 cd ~/OmaCloud
@@ -111,10 +112,10 @@ omarchy-shell shell rescanPlugins
 omarchy plugin enable omacloud --section right
 ```
 
-Verás ☁️ (estado; click = forzar sync) y 📁 (abrir `~/Drive`). El tooltip
-muestra estado, último sync y errores.
+You will see ☁️ (status; click = force sync) and 📁 (open `~/Drive`). The
+tooltip shows status, last sync and errors.
 
-## 7. Verificación
+## 7. Verify
 
 ```bash
 systemctl --user is-active omacloud-mount.service omacloud-bisync.timer
@@ -122,20 +123,20 @@ cat ~/.local/state/omacloud/status.json
 omarchy plugin list | grep omacloud
 ```
 
-## Notas
+## Notes
 
-- `bisync` **aborta sin borrar** si un lado queda vacío o si requiere
-  `--resync`; en ese caso `status.json` queda en `error` con el motivo:
-  revísalo antes de forzar nada.
-- El log de cada corrida está en `~/.local/state/omacloud/bisync.log`.
+- `bisync` **aborts without deleting** if one side is empty or requires
+  `--resync`; then `status.json` holds `error` with the reason: check it
+  before forcing anything.
+- Each run's log is at `~/.local/state/omacloud/bisync.log`.
 
-## Desinstalar
+## Uninstall
 
 ```bash
 systemctl --user disable --now omacloud-mount.service omacloud-bisync.timer
 omarchy plugin disable omacloud
 rm -rf ~/.config/systemd/user/omacloud-* ~/.local/bin/omacloud-bisync \
   ~/.config/omarchy/plugins/omacloud ~/Drive ~/.local/share/omacloud
-# Opcional: revocar el acceso en myaccount.google.com/permissions
-# y borrar ~/.config/omacloud/.env + ~/.config/rclone/rclone.conf
+# Optional: revoke access at myaccount.google.com/permissions
+# and delete ~/.config/omacloud/.env + ~/.config/rclone/rclone.conf
 ```
