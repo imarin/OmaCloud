@@ -264,8 +264,8 @@ BarWidget {
 
       Text {
         text: root.str.menuTitle + " — " + root.statusWord()
-        color: root.foreground
-        font.family: root.fontFamily
+        color: Color.foreground
+        font.family: Style.font.family
         font.pixelSize: Style.font.body
         font.bold: true
       }
@@ -288,8 +288,8 @@ BarWidget {
 
       Text {
         text: root.str.frequency + " (" + root.interval + ")"
-        color: root.foreground
-        font.family: root.fontFamily
+        color: Color.foreground
+        font.family: Style.font.family
         font.pixelSize: Style.font.caption
       }
 
@@ -307,8 +307,8 @@ BarWidget {
 
       Text {
         text: root.str.apiKeys
-        color: root.foreground
-        font.family: root.fontFamily
+        color: Color.foreground
+        font.family: Style.font.family
         font.pixelSize: Style.font.caption
       }
 
@@ -317,7 +317,7 @@ BarWidget {
         placeholderText: root.str.idPh
         text: root.keysId
         onTextChanged: root.keysId = text
-        font.family: root.fontFamily
+        font.family: Style.font.family
       }
 
       TextField {
@@ -326,7 +326,7 @@ BarWidget {
         echoMode: TextInput.Password
         text: root.keysSecret
         onTextChanged: root.keysSecret = text
-        font.family: root.fontFamily
+        font.family: Style.font.family
       }
 
       Button {
@@ -342,8 +342,8 @@ BarWidget {
       Text {
         visible: root.menuMsg !== ""
         text: root.menuMsg
-        color: root.foreground
-        font.family: root.fontFamily
+        color: Color.foreground
+        font.family: Style.font.family
         font.pixelSize: Style.font.caption
         wrapMode: Text.WordWrap
         width: parent.width
