@@ -8,8 +8,16 @@ del tamaño de tu Drive).
 
 - Omarchy (Arch Linux + Hyprland + Quickshell).
 - Cuenta de Google con acceso a Drive.
-- Este repo clonado en tu máquina. En esta guía `<repo>` es el
-  directorio donde lo clonaste.
+- `git` instalado.
+
+## 0. Clonar el repo
+
+```bash
+git clone https://github.com/imarin/OmaCloud.git
+```
+
+Esto crea la carpeta `OmaCloud` con el código (los pasos 5 y 6 entran en
+ella con `cd OmaCloud`).
 
 ## 1. rclone
 
@@ -70,7 +78,7 @@ con `rclone config reconnect OmaCloud:` (responde `y`, `y`, `n`).
 Vista en vivo en `~/Drive` + réplica local sincronizada cada 15 min:
 
 ```bash
-cd <repo>
+cd OmaCloud
 cp backend/omacloud-bisync ~/.local/bin/ && chmod +x ~/.local/bin/omacloud-bisync
 cp backend/*.service backend/*.timer ~/.config/systemd/user/
 systemctl --user daemon-reload
@@ -84,7 +92,7 @@ cat ~/.local/state/omacloud/status.json   # {"status":"ok",...}
 ## 6. Widget de barra
 
 ```bash
-cd <repo>
+cd OmaCloud
 omarchy plugin validate ./shell/omacloud
 mkdir -p ~/.config/omarchy/plugins
 ln -sfn "$PWD/shell/omacloud" ~/.config/omarchy/plugins/omacloud
