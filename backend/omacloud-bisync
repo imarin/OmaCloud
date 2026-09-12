@@ -4,6 +4,10 @@
 #   {"status":"syncing|ok|error","last_sync":"...","last_error":"...","updated":"..."}
 set -u
 
+# Secretos y overrides locales (fuera del repo, nunca se commitean).
+# shellcheck disable=SC1091
+[ -f "$HOME/.config/omacloud/.env" ] && . "$HOME/.config/omacloud/.env"
+
 REMOTE="${OMACLOUD_REMOTE:-OmaCloud:}"
 REPLICA="${OMACLOUD_REPLICA:-${XDG_DATA_HOME:-$HOME/.local/share}/omacloud/replica}"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/omacloud"
