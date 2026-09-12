@@ -18,8 +18,13 @@ Drive).
 
 ## Instalación
 
-Ver [INSTALL.md](INSTALL.md): rclone, OAuth con client_id propio,
-servicio y widget.
+Vía rápida:
+
+```bash
+git clone https://github.com/imarin/OmaCloud.git ~/OmaCloud && ~/OmaCloud/install.sh
+```
+
+Guía paso a paso: [INSTALL.md](INSTALL.md).
 
 ## Requisitos
 
