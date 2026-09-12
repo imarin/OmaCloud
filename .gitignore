@@ -1,0 +1,21 @@
+# Rclone
+rclone.conf
+*.rclone.conf
+
+# OAuth / secretos — nunca commitear
+.env
+*.token.json
+*credentials*.json
+service-account*.json
+
+# Omarchy / Quickshell
+*.qmlc
+qmlls.ini
+
+# Sistema
+.DS_Store
+Thumbs.db
+*~
+*.swp
+.idea/
+.vscode/
