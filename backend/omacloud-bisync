@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# OmaCloud: sincroniza la réplica local <-> Google Drive y publica estado.
+# Estado (contrato con el widget, ADR-002): $STATE_DIR/status.json
+#   {"status":"syncing|ok|error","last_sync":"...","last_error":"...","updated":"..."}
+set -u
+
+REMOTE="${OMACLOUD_REMOTE:-OmaCloud:}"
+REPLICA="${OMACLOUD_REPLICA:-${XDG_DATA_HOME:-$HOME/.local/share}/omacloud/replica}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/omacloud"
+STATUS="$STATE_DIR/status.json"
+LOG="$STATE_DIR/bisync.log"
+
+mkdir -p "$REPLICA" "$STATE_DIR"
+
+prev_sync="$(grep -o '"last_sync":"[^"]*"' "$STATUS" 2>/dev/null | cut -d'"' -f4)"
+LAST_SYNC="${prev_sync:-never}"
+
+write_status() { # $1=status, $2=last_error
+  local err="${2//\"/}" # sanea comillas para no romper el JSON
+  printf '{"status":"%s","last_sync":"%s","last_error":"%s","updated":"%s"}\n' \
+    "$1" "$LAST_SYNC" "$err" "$(date -u +%FT%TZ)" > "$STATUS.tmp" \
+    && mv "$STATUS.tmp" "$STATUS"
+}
+
+write_status "syncing" ""
+
+if rclone bisync "$REPLICA" "$REMOTE" --log-file "$LOG" --log-file-max-age 7d >>"$LOG" 2>&1; then
+  LAST_SYNC="$(date -u +%FT%TZ)"
+  write_status "ok" ""
+else
+  err="$(grep -i -m1 -E 'error|abort|fail' "$LOG" | tail -c 300)"
+  write_status "error" "$err"
+  exit 1
+fi

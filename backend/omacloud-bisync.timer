@@ -1,0 +1,10 @@
+[Unit]
+Description=OmaCloud: bisync periódico cada 15 minutos
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Unit=omacloud-bisync.service
+
+[Install]
+WantedBy=timers.target

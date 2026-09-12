@@ -1,0 +1,6 @@
+[Unit]
+Description=OmaCloud: sincroniza réplica local <-> Drive (oneshot)
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/omacloud-bisync
