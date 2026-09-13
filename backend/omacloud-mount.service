@@ -5,6 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+# Limpia mounts muertos (cierre brusco) antes de arrancar; el - ignora fallos.
+ExecStartPre=-/usr/bin/fusermount3 -u %h/Drive
 ExecStartPre=/usr/bin/mkdir -p %h/Drive
 ExecStart=%h/.local/bin/rclone mount OmaCloud: %h/Drive --vfs-cache-mode writes --dir-cache-time 5m
 Restart=on-failure
