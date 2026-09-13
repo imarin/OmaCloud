@@ -1,0 +1,8 @@
+{
+  // OmaCloud — entradas de menú (las instala install.sh en
+  // ~/.config/omarchy/extensions/omarchy-menu.jsonc).
+  "omacloud": {"icon":"\uf0c2","label":"OmaCloud"},
+  "omacloud.open": {"icon":"\uf07b","label":"Abrir Drive","action":"xdg-open ~/Drive"},
+  "omacloud.sync": {"icon":"\uf021","label":"Sincronizar ahora","action":"systemctl --user start omacloud-bisync.service"},
+  "omacloud.reactivate": {"icon":"\uf011","label":"Reactivar servicios y widget","action":"sh -c 'systemctl --user enable --now omacloud-mount.service omacloud-bisync.timer && omarchy plugin enable omacloud --section right'"}
+}

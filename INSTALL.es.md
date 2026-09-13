@@ -116,6 +116,11 @@ omarchy plugin enable omacloud --section right
 Verás ☁️ (estado; click = forzar sync) y 📁 (abrir `~/Drive`). El tooltip
 muestra estado, último sync y errores.
 
+El instalador agrega además el submenú OmaCloud al menú de Omarchy (abrir,
+sincronizar, reactivar servicios + widget). Instalación manual: fusiona
+`extras/omacloud-menu.jsonc` dentro de
+`~/.config/omarchy/extensions/omarchy-menu.jsonc`.
+
 ## 7. Verificación
 
 ```bash

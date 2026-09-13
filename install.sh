@@ -33,6 +33,8 @@ if [[ "${LC_ALL:-${LANG:-en}}" =~ ^es ]]; then
   M_PLUGIN_FAIL="plugin inválido"
   M_WIDGET_OK="widget habilitado a la derecha"
   M_WIDGET_FAIL="no se pudo habilitar el widget"
+  M_MENU_OK="menú OmaCloud instalado"
+  M_MENU_FAIL="no se pudo actualizar el menú"
   M_DONE="== Listo =="
   M_BAR="Verifica la barra: ☁️ estado/sync, 📁 abrir Drive."
 else
@@ -59,6 +61,8 @@ else
   M_PLUGIN_FAIL="plugin invalid"
   M_WIDGET_OK="widget enabled on the right"
   M_WIDGET_FAIL="could not enable the widget"
+  M_MENU_OK="OmaCloud menu installed"
+  M_MENU_FAIL="could not update the menu"
   M_DONE="== Done =="
   M_BAR="Check the bar: ☁️ status/sync, 📁 open Drive."
 fi
@@ -126,6 +130,33 @@ ln -sfn "$REPO/shell/omacloud" "$HOME/.config/omarchy/plugins/omacloud"
 omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
 omarchy plugin enable omacloud --section right >/dev/null \
   && ok "$M_WIDGET_OK" || die "$M_WIDGET_FAIL"
+
+# 6. menú omarchy (fusión por texto: conserva comentarios del usuario)
+if python3 - "$REPO/extras/omacloud-menu.jsonc" "$HOME/.config/omarchy/extensions/omarchy-menu.jsonc" <<'EOF' | grep -q "MENU_ADDED\|MENU_PRESENT"
+import json, shutil, sys
+src, dst = sys.argv[1], sys.argv[2]
+with open(src) as f:
+    entries = [l.strip() for l in f if l.strip().startswith('"omacloud')]
+with open(dst) as f:
+    cur = f.read()
+if '"omacloud.open"' in cur:
+    print("MENU_PRESENT")
+else:
+    shutil.copy(dst, dst + ".bak.omacloud")
+    block = "  // OmaCloud (install.sh — no editar a mano).\n" + "\n".join("  " + l for l in entries) + "\n"
+    idx = cur.rstrip().rfind("}")
+    cur = cur.rstrip()[:idx].rstrip() + "\n" + block + "}\n"
+    stripped = "\n".join(l for l in cur.splitlines() if not l.strip().startswith("//"))
+    json.loads(stripped)  # valida antes de escribir
+    with open(dst, "w") as f:
+        f.write(cur)
+    print("MENU_ADDED")
+EOF
+then
+  ok "$M_MENU_OK"
+else
+  die "$M_MENU_FAIL"
+fi
 
 echo "$M_DONE"
 cat "$HOME/.local/state/omacloud/status.json" 2>/dev/null || true
