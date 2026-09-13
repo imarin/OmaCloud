@@ -247,6 +247,8 @@ BarWidget {
 
   Row {
     id: row
+    focus: true
+    Keys.onEscapePressed: root.menuOpen = false
     BarIconButton {
       id: cloudBtn
       bar: root.bar
@@ -270,18 +272,18 @@ BarWidget {
     }
   }
 
-  PopupCard {
+  KeyboardPanel {
     id: menuPopup
     anchorItem: cloudBtn
     owner: root
     bar: root.bar
+    focusTarget: menuColumn
     contentWidth: Style.space(300)
     contentHeight: menuPopup.fittedContentHeight(menuColumn.implicitHeight)
     onOpenChanged: {
       if (!open) root.menuOpen = false
       else Qt.callLater(function() {
         menuColumn.forceActiveFocus()
-        console.log("omacloud focus:", menuColumn.activeFocus, "win:", menuPopup.visible)
       })
     }
 
@@ -290,28 +292,14 @@ BarWidget {
       anchors.fill: parent
       spacing: Style.space(8)
       focus: true
-      Keys.onEscapePressed: {
-        console.log("omacloud esc")
-        root.menuOpen = false
-      }
+      Keys.onEscapePressed: root.menuOpen = false
 
-      Row {
-        width: parent.width
-        spacing: Style.space(6)
-        Text {
-          width: parent.width - closeBtn.width - Style.space(6)
-          text: root.str.menuTitle + " — " + root.statusWord()
-          color: Color.foreground
-          font.family: Style.font.family
-          font.pixelSize: Style.font.body
-          font.bold: true
-          elide: Text.ElideRight
-        }
-        Button {
-          id: closeBtn
-          text: "\uf00d"
-          onClicked: root.menuOpen = false
-        }
+      Text {
+        text: root.str.menuTitle + " — " + root.statusWord()
+        color: Color.foreground
+        font.family: Style.font.family
+        font.pixelSize: Style.font.body
+        font.bold: true
       }
 
       Row {
