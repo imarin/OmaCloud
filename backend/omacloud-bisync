@@ -17,7 +17,23 @@ LOG="$STATE_DIR/bisync.log"
 mkdir -p "$REPLICA" "$STATE_DIR"
 
 prev_sync="$(grep -o '"last_sync":"[^"]*"' "$STATUS" 2>/dev/null | cut -d'"' -f4)"
+prev_status="$(grep -o '"status":"[^"]*"' "$STATUS" 2>/dev/null | cut -d'"' -f4)"
 LAST_SYNC="${prev_sync:-never}"
+
+if [[ "${LC_ALL:-${LANG:-en}}" =~ ^es ]]; then
+  N_TITLE="OmaCloud"
+  N_ERR="Error de sincronización"
+  N_OK="Sincronización restablecida"
+else
+  N_TITLE="OmaCloud"
+  N_ERR="Sync error"
+  N_OK="Sync recovered"
+fi
+
+notify() { # $1=urgency, $2=text
+  command -v notify-send >/dev/null || return 0
+  notify-send -a "$N_TITLE" -u "$1" "$N_TITLE" "$2" || true
+}
 
 write_status() { # $1=status, $2=last_error
   local err="${2//\"/}" # sanea comillas para no romper el JSON
@@ -31,8 +47,12 @@ write_status "syncing" ""
 if rclone bisync "$REPLICA" "$REMOTE" --log-file "$LOG" --log-file-max-age 7d >>"$LOG" 2>&1; then
   LAST_SYNC="$(date -u +%FT%TZ)"
   write_status "ok" ""
+  # Avisa solo al recuperarse (evita spam cada 15 min).
+  [ "${prev_status:-}" = "error" ] && notify normal "$N_OK"
 else
   err="$(grep -i -m1 -E 'error|abort|fail' "$LOG" | tail -c 300)"
   write_status "error" "$err"
+  # Avisa solo al primer fallo; los siguientes ya están notificados.
+  [ "${prev_status:-}" = "error" ] || notify critical "$N_ERR" "$err"
   exit 1
 fi

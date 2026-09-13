@@ -41,3 +41,21 @@ systemctl --user enable --now omacloud-mount.service omacloud-bisync.timer
   `OMACLOUD_CLIENT_ID` / `OMACLOUD_CLIENT_SECRET` más overrides
   opcionales (`OMACLOUD_REMOTE`, `OMACLOUD_REPLICA`). El wrapper los
   carga si el archivo existe.
+
+## Notificaciones
+
+El wrapper avisa solo en cambios de estado (sin spam): error nuevo
+(crítica) y recuperación (normal). Los fallos repetidos no re-notifican.
+
+## Recuperación (nunca auto-resync)
+
+Si `status.json` queda en `error`:
+
+1. Lee el motivo: `cat ~/.local/state/omacloud/status.json` y la cola de
+   `~/.local/state/omacloud/bisync.log`.
+2. Errores de red / rate-limit: no hagas nada, el timer reintenta solo.
+3. `Must run --resync` o `empty listing`: un lado cambió de forma que
+   bisync no reconcilia solo. Revisa qué se borró/movió en Drive y en la
+   réplica **antes** de forzar nada.
+4. Solo cuando entiendas el diff: `rclone bisync <replica> OmaCloud: --resync --verbose --dry-run` primero, y sin `--dry-run` después.
+5. Verifica `status.json` en `ok` en la siguiente corrida.
