@@ -1,4 +1,4 @@
-# Install — OmaCloud v1
+# Install — OmaCloud v0.1.1
 
 Google Drive client for Omarchy: `rclone` (mount + bisync) + bar widget.
 Estimated time: 20–30 min (first sync depends on your Drive size).

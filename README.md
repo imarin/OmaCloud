@@ -4,7 +4,7 @@ Google Drive client for [Omarchy](https://omarchy.org/). It combines
 `rclone` sync (mount + bi-sync) with a Quickshell (QML) bar widget for
 status and actions.
 
-**Status: working v1.** It mounts your Drive at `~/Drive`, keeps a local
+**Status: working v0.1.1.** It mounts your Drive at `~/Drive`, keeps a local
 replica synced every 15 min as a user service, and shows status in the bar
 (cloud click = force sync, folder click = open Drive).
 

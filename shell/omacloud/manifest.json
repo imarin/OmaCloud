@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "omacloud",
   "name": "OmaCloud",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Ismael Marin",
   "description": "Google Drive sync status (rclone backend)",
   "kinds": [
