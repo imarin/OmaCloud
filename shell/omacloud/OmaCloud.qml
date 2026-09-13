@@ -279,12 +279,15 @@ BarWidget {
     contentHeight: menuPopup.fittedContentHeight(menuColumn.implicitHeight)
     onOpenChanged: {
       if (!open) root.menuOpen = false
+      else menuColumn.forceActiveFocus()
     }
 
     Column {
       id: menuColumn
       anchors.fill: parent
       spacing: Style.space(8)
+      focus: true
+      Keys.onEscapePressed: root.menuOpen = false
 
       Text {
         text: root.str.menuTitle + " — " + root.statusWord()
