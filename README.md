@@ -27,6 +27,11 @@ Desktop-app credentials give you:
   (see INSTALL.md step 2).
 - **Privacy:** tokens are issued to your project, not a shared one.
 
+## Credits
+
+Sync engine: [rclone](https://rclone.org/) (MIT) — mount, bi-sync and OAuth
+are all theirs; OmaCloud is the Omarchy integration around it.
+
 ## Install
 
 Quick way:
