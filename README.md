@@ -12,7 +12,6 @@ replica synced every 15 min as a user service, and shows status in the bar
 
 - `backend/` — `omacloud-bisync` wrapper + systemd units (mount, bisync, timer)
 - `shell/omacloud/` — Omarchy plugin (`manifest.json` + QML)
-- `docs/` — vision, decisions (ADRs), roadmap, rclone spike note
 - `install.sh` — idempotent bilingual (ES/EN) installer
 
 ## Install

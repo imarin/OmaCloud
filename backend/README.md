@@ -1,6 +1,6 @@
 # Backend OmaCloud
 
-Dos vías de acceso a Drive (ver `docs/spike-rclone.md`):
+Dos vías de acceso a Drive:
 
 | Vía | Ruta | Mecanismo |
 |-----|------|-----------|

@@ -1,3 +1,6 @@
+# Docs internos — no se publican
+docs/
+
 # Rclone
 rclone.conf
 *.rclone.conf
