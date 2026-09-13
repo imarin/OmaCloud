@@ -8,6 +8,8 @@ status and actions.
 replica synced every 15 min as a user service, and shows status in the bar
 (cloud click = force sync, folder click = open Drive).
 
+![OmaCloud widget](OmaCloud.png)
+
 ## Layout
 
 - `backend/` — `omacloud-bisync` wrapper + systemd units (mount, bisync, timer)
