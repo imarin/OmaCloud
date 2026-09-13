@@ -43,6 +43,7 @@ BarWidget {
     secretPh: "Client secret",
     save: "Guardar claves",
     reconnect: "Re-autorizar en navegador",
+    quit: "Cerrar OmaCloud",
     savedOk: "Claves guardadas y acceso verificado.",
     needsAuth: "Claves guardadas. Pulsa Re-autorizar y acepta en el navegador.",
     reconnectOk: "Autorización completa.",
@@ -63,6 +64,7 @@ BarWidget {
     secretPh: "Client secret",
     save: "Save keys",
     reconnect: "Re-authorize in browser",
+    quit: "Quit OmaCloud",
     savedOk: "Keys saved and access verified.",
     needsAuth: "Keys saved. Press Re-authorize and accept in the browser.",
     reconnectOk: "Authorization complete.",
@@ -223,6 +225,18 @@ BarWidget {
     }
   }
 
+  Process {
+    id: quitProc
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        if (text.trim() === "QUIT_OK" && root.bar) {
+          root.bar.run("omarchy plugin disable omacloud")
+        }
+      }
+    }
+  }
+
   Timer {
     interval: 60000
     running: true
@@ -359,6 +373,16 @@ BarWidget {
       Button {
         text: root.str.reconnect
         onClicked: root.reconnect()
+      }
+
+      Button {
+        width: parent.width
+        text: root.str.quit
+        onClicked: {
+          root.menuOpen = false
+          quitProc.command = [root.helper, "quit"]
+          quitProc.running = true
+        }
       }
 
       Text {

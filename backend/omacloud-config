@@ -5,6 +5,7 @@
 #   set-interval N -> número aplicado | ERR_RANGE
 #   set-keys      -> lee CLIENT_ID y CLIENT_SECRET por stdin (2 líneas);
 #                    imprime SAVED_OK | SAVED_NEEDS_AUTH | ERR_EMPTY
+#   quit           -> detiene todo (mount+timer), desmonta, imprime QUIT_OK
 # Las claves nunca van por argv (visibles en `ps`): entran por stdin.
 set -u
 
@@ -87,8 +88,17 @@ EOF
       echo "SAVED_NEEDS_AUTH"
     fi
     ;;
+  quit)
+    # Cierre total: detiene y deshabilita mount + timer, desmonta ~/Drive
+    # y mata restos de rclone. Reactivar con ./install.sh
+    systemctl --user stop omacloud-bisync.timer omacloud-mount.service 2>/dev/null
+    systemctl --user disable --quiet omacloud-bisync.timer omacloud-mount.service 2>/dev/null
+    fusermount3 -u "$HOME/Drive" 2>/dev/null
+    pkill -f "rclone mount OmaCloud:" 2>/dev/null
+    echo "QUIT_OK"
+    ;;
   *)
-    echo "uso: get-interval | set-interval MINUTOS | set-keys" >&2
+    echo "uso: get-interval | set-interval MINUTOS | set-keys | quit" >&2
     exit 2
     ;;
 esac
