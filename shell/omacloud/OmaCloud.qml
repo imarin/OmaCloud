@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
 import qs.Commons
@@ -21,6 +22,9 @@ BarWidget {
   property var pairs: []
   property string newRemote: ""
   property string newLocal: ""
+  property bool browsing: false
+  property string browsePath: ""
+  property var browseList: []
   property string menuMsg: ""
   property string keysId: ""
   property string keysSecret: ""
@@ -52,6 +56,12 @@ BarWidget {
     remotePh: "Drive:Carpeta (o ID de Computadoras)",
     localPh: "Destino, ej. ~/MisDocs",
     add: "Agregar par",
+    srcLbl: "Origen",
+    dstLbl: "Destino",
+    browse: "Examinar Drive",
+    chooseDest: "Elegir destino",
+    useHere: "Usar esta carpeta",
+    goUp: "Subir",
     savedOk: "Claves guardadas y acceso verificado.",
     needsAuth: "Claves guardadas. Pulsa Re-autorizar y acepta en el navegador.",
     reconnectOk: "Autorización completa.",
@@ -78,6 +88,12 @@ BarWidget {
     remotePh: "Drive:Folder (or Computers ID)",
     localPh: "Destination, e.g. ~/MyDocs",
     add: "Add pair",
+    srcLbl: "Source",
+    dstLbl: "Destination",
+    browse: "Browse Drive",
+    chooseDest: "Choose destination",
+    useHere: "Use this folder",
+    goUp: "Up",
     savedOk: "Keys saved and access verified.",
     needsAuth: "Keys saved. Press Re-authorize and accept in the browser.",
     reconnectOk: "Authorization complete.",
@@ -137,6 +153,37 @@ BarWidget {
     cfgProc.mode = "pair-change"
     cfgProc.command = [root.helper, "remove-pair", local]
     cfgProc.running = true
+  }
+
+  function toggleBrowse() {
+    if (root.browsing) {
+      root.browsing = false
+      return
+    }
+    root.browsing = true
+    browseLoad()
+  }
+
+  function browseLoad() {
+    if (browseProc.running) return
+    browseProc.command = [root.helper, "list-dirs", root.browsePath]
+    browseProc.running = true
+  }
+
+  function browseDown(name) {
+    root.browsePath = root.browsePath === "" ? name : root.browsePath + "/" + name
+    browseLoad()
+  }
+
+  function browseUp() {
+    var i = root.browsePath.lastIndexOf("/")
+    root.browsePath = i === -1 ? "" : root.browsePath.substring(0, i)
+    browseLoad()
+  }
+
+  function useFolder() {
+    root.newRemote = "OmaCloud:" + root.browsePath
+    root.browsing = false
   }
 
   function setInterval(mins) {
@@ -295,6 +342,22 @@ BarWidget {
   }
 
   Process {
+    id: browseProc
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        var list = []
+        var lines = text.split("\n")
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].trim()
+          if (line !== "") list.push(line)
+        }
+        root.browseList = list
+      }
+    }
+  }
+
+  Process {
     id: quitProc
     stdout: StdioCollector {
       waitForEnd: true
@@ -312,6 +375,17 @@ BarWidget {
     repeat: true
     triggeredOnStart: true
     onTriggered: root.refresh()
+  }
+
+  FolderDialog {
+    id: destDlg
+    title: root.str.chooseDest
+    currentFolder: root.home !== "" ? "file://" + root.home : ""
+    onAccepted: {
+      var u = String(destDlg.selectedFolder)
+      if (u.substring(0, 7) === "file://") u = u.substring(7)
+      root.newLocal = u
+    }
   }
 
   Row {
@@ -447,20 +521,74 @@ BarWidget {
         }
       }
 
-      TextField {
-        width: parent.width
-        placeholderText: root.str.remotePh
-        text: root.newRemote
-        onTextChanged: root.newRemote = text
+      Text {
+        text: root.str.srcLbl + ": " + (root.newRemote === "" ? "—" : root.newRemote)
+        color: Color.foreground
         font.family: Style.font.family
+        font.pixelSize: Style.font.caption
+        elide: Text.ElideMiddle
+        width: parent.width
       }
 
-      TextField {
+      Button {
         width: parent.width
-        placeholderText: root.str.localPh
-        text: root.newLocal
-        onTextChanged: root.newLocal = text
+        text: root.str.browse
+        onClicked: root.toggleBrowse()
+      }
+
+      Column {
+        visible: root.browsing
+        width: parent.width
+        spacing: Style.space(4)
+
+        Text {
+          text: "Drive:/" + root.browsePath
+          color: Color.foreground
+          font.family: Style.font.family
+          font.pixelSize: Style.font.caption
+          elide: Text.ElideMiddle
+          width: parent.width
+        }
+
+        Row {
+          width: parent.width
+          spacing: Style.space(6)
+          Button {
+            width: (parent.width - Style.space(6)) / 2
+            text: root.str.goUp
+            onClicked: root.browseUp()
+          }
+          Button {
+            width: (parent.width - Style.space(6)) / 2
+            text: root.str.useHere
+            onClicked: root.useFolder()
+          }
+        }
+
+        Repeater {
+          model: root.browseList
+          delegate: Button {
+            required property string modelData
+            width: menuColumn.width
+            text: "\uf07b " + modelData
+            onClicked: root.browseDown(modelData)
+          }
+        }
+      }
+
+      Text {
+        text: root.str.dstLbl + ": " + (root.newLocal === "" ? "—" : root.newLocal)
+        color: Color.foreground
         font.family: Style.font.family
+        font.pixelSize: Style.font.caption
+        elide: Text.ElideMiddle
+        width: parent.width
+      }
+
+      Button {
+        width: parent.width
+        text: root.str.chooseDest
+        onClicked: destDlg.open()
       }
 
       Button {

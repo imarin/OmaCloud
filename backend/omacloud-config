@@ -122,6 +122,11 @@ EOF
   list-pairs)
     [ -f "$PAIRS_FILE" ] && grep -v '^[[:space:]]*#' "$PAIRS_FILE" | grep -v '^[[:space:]]*$' || true
     ;;
+  list-dirs)
+    # list-dirs [RUTA] -> subcarpetas de OmaCloud:RUTA (una por línea, sin /)
+    sub="${2:-}"
+    rclone lsf "OmaCloud:${sub}" --dirs-only 2>/dev/null | sed 's:/*$::' || true
+    ;;
   quit)
     # Cierre total: detiene y deshabilita mount + timer, desmonta ~/Drive
     # y mata restos de rclone. Reactivar con ./install.sh
