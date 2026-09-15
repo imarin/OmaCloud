@@ -160,6 +160,7 @@ BarWidget {
       root.browsing = false
       return
     }
+    root.menuOpen = false
     root.browsing = true
     browseLoad()
   }
@@ -618,7 +619,7 @@ BarWidget {
 
   KeyboardPanel {
     id: browsePopup
-    anchorItem: browseBtn
+    anchorItem: cloudBtn
     owner: root
     bar: root.bar
     focusTarget: browseColumn
