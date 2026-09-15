@@ -18,6 +18,9 @@ BarWidget {
   property bool menuOpen: false
   property string interval: "?"
   property int freqPreview: -1
+  property var pairs: []
+  property string newRemote: ""
+  property string newLocal: ""
   property string menuMsg: ""
   property string keysId: ""
   property string keysSecret: ""
@@ -44,6 +47,11 @@ BarWidget {
     save: "Guardar claves",
     reconnect: "Re-autorizar en navegador",
     quit: "Cerrar OmaCloud",
+    pairs: "Carpetas sincronizadas",
+    fullDrive: "Drive completo",
+    remotePh: "Drive:Carpeta (o ID de Computadoras)",
+    localPh: "Destino, ej. ~/MisDocs",
+    add: "Agregar par",
     savedOk: "Claves guardadas y acceso verificado.",
     needsAuth: "Claves guardadas. Pulsa Re-autorizar y acepta en el navegador.",
     reconnectOk: "Autorización completa.",
@@ -65,6 +73,11 @@ BarWidget {
     save: "Save keys",
     reconnect: "Re-authorize in browser",
     quit: "Quit OmaCloud",
+    pairs: "Synced folders",
+    fullDrive: "Full Drive",
+    remotePh: "Drive:Folder (or Computers ID)",
+    localPh: "Destination, e.g. ~/MyDocs",
+    add: "Add pair",
     savedOk: "Keys saved and access verified.",
     needsAuth: "Keys saved. Press Re-authorize and accept in the browser.",
     reconnectOk: "Authorization complete.",
@@ -100,8 +113,30 @@ BarWidget {
       cfgProc.mode = "get-interval"
       cfgProc.command = [root.helper, "get-interval"]
       cfgProc.running = true
+      loadPairs()
     }
     root.menuOpen = !root.menuOpen
+  }
+
+  function loadPairs() {
+    if (!pairsProc.running) {
+      pairsProc.command = ["cat", home + "/.config/omacloud/pairs"]
+      pairsProc.running = true
+    }
+  }
+
+  function addPair() {
+    if (root.newRemote === "" || root.newLocal === "" || cfgProc.running) return
+    cfgProc.mode = "pair-change"
+    cfgProc.command = [root.helper, "add-pair", root.newRemote, root.newLocal]
+    cfgProc.running = true
+  }
+
+  function removePair(local) {
+    if (cfgProc.running) return
+    cfgProc.mode = "pair-change"
+    cfgProc.command = [root.helper, "remove-pair", local]
+    cfgProc.running = true
   }
 
   function setInterval(mins) {
@@ -196,6 +231,15 @@ BarWidget {
         } else if (cfgProc.mode === "reconnect") {
           root.menuMsg = /Got code/.test(out) ? root.str.reconnectOk : root.str.reconnectFail + "\n" + out
           root.refresh()
+        } else if (cfgProc.mode === "pair-change") {
+          if (out === "ADDED" || out === "REMOVED") {
+            root.newRemote = ""
+            root.newLocal = ""
+            root.menuMsg = ""
+            root.loadPairs()
+          } else {
+            root.menuMsg = out
+          }
         }
       }
     }
@@ -222,6 +266,31 @@ BarWidget {
         else if (out === "SAVED_NEEDS_AUTH") root.menuMsg = root.str.needsAuth
         else root.menuMsg = out
       }
+    }
+  }
+
+  Process {
+    id: pairsProc
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        var list = []
+        var lines = text.split("\n")
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].trim()
+          if (line === "" || line.charAt(0) === "#") continue
+          var sep = line.indexOf("|")
+          if (sep === -1) continue
+          list.push({
+            remote: line.substring(0, sep).trim(),
+            local: line.substring(sep + 1).trim()
+          })
+        }
+        root.pairs = list
+      }
+    }
+    onExited: function(exitCode) {
+      if (exitCode !== 0) root.pairs = []
     }
   }
 
@@ -347,6 +416,57 @@ BarWidget {
             root.setInterval(v)
           }
         }
+      }
+
+      Text {
+        text: root.str.pairs + (root.pairs.length === 0 ? " (" + root.str.fullDrive + ")" : "")
+        color: Color.foreground
+        font.family: Style.font.family
+        font.pixelSize: Style.font.caption
+      }
+
+      Repeater {
+        model: root.pairs
+        delegate: Row {
+          required property var modelData
+          width: menuColumn.width
+          spacing: Style.space(6)
+          Text {
+            width: parent.width - pairDelBtn.width - Style.space(6)
+            text: modelData.remote + " → " + modelData.local
+            color: Color.foreground
+            font.family: Style.font.family
+            font.pixelSize: Style.font.caption
+            elide: Text.ElideMiddle
+          }
+          Button {
+            id: pairDelBtn
+            text: "\uf00d"
+            onClicked: root.removePair(modelData.local)
+          }
+        }
+      }
+
+      TextField {
+        width: parent.width
+        placeholderText: root.str.remotePh
+        text: root.newRemote
+        onTextChanged: root.newRemote = text
+        font.family: Style.font.family
+      }
+
+      TextField {
+        width: parent.width
+        placeholderText: root.str.localPh
+        text: root.newLocal
+        onTextChanged: root.newLocal = text
+        font.family: Style.font.family
+      }
+
+      Button {
+        width: parent.width
+        text: root.str.add
+        onClicked: root.addPair()
       }
 
       Text {
