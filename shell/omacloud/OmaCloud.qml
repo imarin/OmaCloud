@@ -23,8 +23,11 @@ BarWidget {
   property string newRemote: ""
   property string newLocal: ""
   property bool browsing: false
+  property string browsePrefix: "OmaCloud:"
+  property string browseRootName: "Mi unidad"
   property string browsePath: ""
   property var browseList: []
+  property var browseRoots: []
   property string menuMsg: ""
   property string keysId: ""
   property string keysSecret: ""
@@ -162,13 +165,44 @@ BarWidget {
     }
     root.menuOpen = false
     root.browsing = true
-    browseLoad()
+    loadRoots()
+  }
+
+  function loadRoots() {
+    if (rootsProc.running) return
+    rootsProc.command = [root.helper, "list-roots"]
+    rootsProc.running = true
   }
 
   function browseLoad() {
     if (browseProc.running) return
-    browseProc.command = [root.helper, "list-dirs", root.browsePath]
+    browseProc.command = [root.helper, "list-dirs", root.browsePrefix, root.browsePath]
     browseProc.running = true
+  }
+
+  function goRoot(spec, name) {
+    root.browsePrefix = spec
+    root.browseRootName = name
+    root.browsePath = ""
+    browseLoad()
+  }
+
+  function crumbs() {
+    // Solo segmentos (la raíz ya está en Orígenes).
+    var out = []
+    if (root.browsePath === "") return out
+    var segs = root.browsePath.split("/")
+    var acc = ""
+    for (var i = 0; i < segs.length; i++) {
+      acc = acc === "" ? segs[i] : acc + "/" + segs[i]
+      out.push({label: segs[i], path: acc})
+    }
+    return out
+  }
+
+  function goCrumb(path) {
+    root.browsePath = path
+    browseLoad()
   }
 
   function browseDown(name) {
@@ -183,7 +217,7 @@ BarWidget {
   }
 
   function useFolder() {
-    root.newRemote = "OmaCloud:" + root.browsePath
+    root.newRemote = root.browsePrefix + root.browsePath
     root.browsing = false
   }
 
@@ -341,6 +375,37 @@ BarWidget {
     }
     onExited: function(exitCode) {
       if (exitCode !== 0) root.pairs = []
+    }
+  }
+
+  Process {
+    id: rootsProc
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        var list = []
+        var lines = text.split("\n")
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].trim()
+          if (line === "" || line.charAt(0) === "#") continue
+          var sep = line.indexOf("|")
+          if (sep === -1) continue
+          list.push({
+            name: line.substring(0, sep).trim(),
+            spec: line.substring(sep + 1).trim()
+          })
+        }
+        if (list.length > 0) {
+          root.browseRoots = list
+          root.browsePrefix = list[0].spec
+          root.browseRootName = list[0].name
+          root.browsePath = ""
+        }
+        root.browseLoad()
+      }
+    }
+    onExited: function(exitCode) {
+      if (exitCode !== 0) root.browseLoad()
     }
   }
 
@@ -623,7 +688,7 @@ BarWidget {
     owner: root
     bar: root.bar
     focusTarget: browseColumn
-    contentWidth: Style.space(300)
+    contentWidth: Style.space(460)
     contentHeight: browsePopup.fittedContentHeight(browseColumn.implicitHeight)
     onOpenChanged: {
       if (!open) root.browsing = false
@@ -636,40 +701,66 @@ BarWidget {
       focus: true
       Keys.onEscapePressed: root.browsing = false
 
-      Text {
-        text: "Drive:/" + root.browsePath
-        color: Color.foreground
-        font.family: Style.font.family
-        font.pixelSize: Style.font.body
-        font.bold: true
-        elide: Text.ElideMiddle
-        width: parent.width
-      }
-
       Row {
         width: parent.width
-        spacing: Style.space(6)
-        Button {
-          width: (parent.width - Style.space(6)) / 2
-          text: root.str.goUp
-          onClicked: root.browseUp()
+        spacing: Style.space(8)
+
+        Column {
+          width: (parent.width - Style.space(8)) * 0.38
+          spacing: Style.space(4)
+
+          Repeater {
+            model: root.browseRoots
+            delegate: Button {
+              required property var modelData
+              width: parent.width
+              text: (modelData.spec === root.browsePrefix ? "● " : "○ ") + modelData.name
+              onClicked: root.goRoot(modelData.spec, modelData.name)
+            }
+          }
+
+          Repeater {
+            model: root.crumbs()
+            delegate: Button {
+              required property var modelData
+              required property int index
+              width: parent.width
+              text: (index === 0 ? "" : "  ".repeat(index)) + "↳ " + modelData.label
+              onClicked: root.goCrumb(modelData.path)
+            }
+          }
         }
-        Button {
-          width: (parent.width - Style.space(6)) / 2
-          text: root.str.useHere
-          onClicked: root.useFolder()
+
+        Column {
+          width: (parent.width - Style.space(8)) * 0.62
+          spacing: Style.space(6)
+
+          Row {
+            width: parent.width
+            spacing: Style.space(6)
+            Button {
+              width: (parent.width - Style.space(6)) / 2
+              text: root.str.goUp
+              onClicked: root.browseUp()
+            }
+            Button {
+              width: (parent.width - Style.space(6)) / 2
+              text: root.str.useHere
+              onClicked: root.useFolder()
+            }
+          }
+
+          Repeater {
+            model: root.browseList
+            delegate: Button {
+              required property string modelData
+              width: parent.width
+              text: "\uf07b " + modelData
+              onClicked: root.browseDown(modelData)
+            }
+          }
         }
       }
-
-      Repeater {
-        model: root.browseList
-        delegate: Button {
-          required property string modelData
-          width: browseColumn.width
-          text: "\uf07b " + modelData
-          onClicked: root.browseDown(modelData)
-        }
       }
     }
   }
-}

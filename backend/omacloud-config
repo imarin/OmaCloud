@@ -123,9 +123,27 @@ EOF
     [ -f "$PAIRS_FILE" ] && grep -v '^[[:space:]]*#' "$PAIRS_FILE" | grep -v '^[[:space:]]*$' || true
     ;;
   list-dirs)
-    # list-dirs [RUTA] -> subcarpetas de OmaCloud:RUTA (una por línea, sin /)
-    sub="${2:-}"
-    rclone lsf "OmaCloud:${sub}" --dirs-only 2>/dev/null | sed 's:/*$::' || true
+    # list-dirs PREFIJO [RUTA] -> subcarpetas (una por línea, sin /).
+    # Ej: list-dirs "OmaCloud:" "Proyectos"
+    prefix="${2:-}"; sub="${3:-}"
+    [ -n "$prefix" ] || { exit 0; }
+    rclone lsf "${prefix}${sub}" --dirs-only 2>/dev/null | sed 's:/*$::' || true
+    ;;
+  list-roots)
+    # Orígenes: Mi unidad + unidades compartidas (nombre|spec).
+    echo "Mi unidad|OmaCloud:"
+    rclone backend drives OmaCloud: 2>/dev/null | python3 -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    data = []
+items = data if isinstance(data, list) else data.get('drives', data.get('teamDrives', []))
+for d in items:
+    if isinstance(d, dict) and d.get('id'):
+        name = d.get('name', d.get('id'))
+        print(f\"{name}|OmaCloud,team_drive={d['id']},root_folder_id={d['id']}:\")
+" 2>/dev/null || true
     ;;
   quit)
     # Cierre total: detiene y deshabilita mount + timer, desmonta ~/Drive
