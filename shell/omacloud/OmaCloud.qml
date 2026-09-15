@@ -227,6 +227,8 @@ BarWidget {
   // Sin binding open<->menuOpen: el popup rompe bindings al cerrarse solo
   // (foco fuera); se sincroniza manual en ambas direcciones.
   onMenuOpenChanged: menuPopup.open = root.menuOpen
+  // Sincronización manual igual que el menú (el cierre externo rompe bindings).
+  onBrowsingChanged: browsePopup.open = root.browsing
 
   implicitWidth: row.implicitWidth
   implicitHeight: row.implicitHeight
@@ -531,49 +533,10 @@ BarWidget {
       }
 
       Button {
+        id: browseBtn
         width: parent.width
         text: root.str.browse
         onClicked: root.toggleBrowse()
-      }
-
-      Column {
-        visible: root.browsing
-        width: parent.width
-        spacing: Style.space(4)
-
-        Text {
-          text: "Drive:/" + root.browsePath
-          color: Color.foreground
-          font.family: Style.font.family
-          font.pixelSize: Style.font.caption
-          elide: Text.ElideMiddle
-          width: parent.width
-        }
-
-        Row {
-          width: parent.width
-          spacing: Style.space(6)
-          Button {
-            width: (parent.width - Style.space(6)) / 2
-            text: root.str.goUp
-            onClicked: root.browseUp()
-          }
-          Button {
-            width: (parent.width - Style.space(6)) / 2
-            text: root.str.useHere
-            onClicked: root.useFolder()
-          }
-        }
-
-        Repeater {
-          model: root.browseList
-          delegate: Button {
-            required property string modelData
-            width: menuColumn.width
-            text: "\uf07b " + modelData
-            onClicked: root.browseDown(modelData)
-          }
-        }
       }
 
       Text {
@@ -649,6 +612,62 @@ BarWidget {
         font.pixelSize: Style.font.caption
         wrapMode: Text.WordWrap
         width: parent.width
+      }
+    }
+  }
+
+  KeyboardPanel {
+    id: browsePopup
+    anchorItem: browseBtn
+    owner: root
+    bar: root.bar
+    focusTarget: browseColumn
+    contentWidth: Style.space(300)
+    contentHeight: browsePopup.fittedContentHeight(browseColumn.implicitHeight)
+    onOpenChanged: {
+      if (!open) root.browsing = false
+    }
+
+    Column {
+      id: browseColumn
+      anchors.fill: parent
+      spacing: Style.space(8)
+      focus: true
+      Keys.onEscapePressed: root.browsing = false
+
+      Text {
+        text: "Drive:/" + root.browsePath
+        color: Color.foreground
+        font.family: Style.font.family
+        font.pixelSize: Style.font.body
+        font.bold: true
+        elide: Text.ElideMiddle
+        width: parent.width
+      }
+
+      Row {
+        width: parent.width
+        spacing: Style.space(6)
+        Button {
+          width: (parent.width - Style.space(6)) / 2
+          text: root.str.goUp
+          onClicked: root.browseUp()
+        }
+        Button {
+          width: (parent.width - Style.space(6)) / 2
+          text: root.str.useHere
+          onClicked: root.useFolder()
+        }
+      }
+
+      Repeater {
+        model: root.browseList
+        delegate: Button {
+          required property string modelData
+          width: browseColumn.width
+          text: "\uf07b " + modelData
+          onClicked: root.browseDown(modelData)
+        }
       }
     }
   }
