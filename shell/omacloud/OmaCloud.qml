@@ -22,6 +22,8 @@ BarWidget {
   property var pairs: []
   property string newRemote: ""
   property string newLocal: ""
+  property string folderId: ""
+  property string browseMsg: ""
   property bool browsing: false
   property string browsePrefix: "OmaCloud:"
   property string browseRootName: "Mi unidad"
@@ -65,6 +67,9 @@ BarWidget {
     chooseDest: "Elegir destino",
     useHere: "Usar esta carpeta",
     goUp: "Subir",
+    folderIdPh: "Pegar ID de carpeta (Computadoras)",
+    openId: "Abrir ID",
+    badId: "ID inválido o sin acceso",
     savedOk: "Claves guardadas y acceso verificado.",
     needsAuth: "Claves guardadas. Pulsa Re-autorizar y acepta en el navegador.",
     reconnectOk: "Autorización completa.",
@@ -97,6 +102,9 @@ BarWidget {
     chooseDest: "Choose destination",
     useHere: "Use this folder",
     goUp: "Up",
+    folderIdPh: "Paste folder ID (Computers)",
+    openId: "Open ID",
+    badId: "Invalid ID or no access",
     savedOk: "Keys saved and access verified.",
     needsAuth: "Keys saved. Press Re-authorize and accept in the browser.",
     reconnectOk: "Authorization complete.",
@@ -219,6 +227,13 @@ BarWidget {
   function useFolder() {
     root.newRemote = root.browsePrefix + root.browsePath
     root.browsing = false
+  }
+
+  function openById() {
+    if (root.folderId === "" || idProc.running) return
+    root.browseMsg = ""
+    idProc.command = [root.helper, "check-id", root.folderId]
+    idProc.running = true
   }
 
   function setInterval(mins) {
@@ -406,6 +421,30 @@ BarWidget {
     }
     onExited: function(exitCode) {
       if (exitCode !== 0) root.browseLoad()
+    }
+  }
+
+  Process {
+    id: idProc
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        if (text.trim() === "OK") {
+          var spec = "OmaCloud,root_folder_id=" + root.folderId + ":"
+          var entry = {name: "ID:" + root.folderId.substring(0, 8), spec: spec}
+          var list = root.browseRoots.slice()
+          var dup = false
+          for (var i = 0; i < list.length; i++) {
+            if (list[i].spec === spec) dup = true
+          }
+          if (!dup) list.push(entry)
+          root.browseRoots = list
+          root.folderId = ""
+          root.goRoot(spec, entry.name)
+        } else {
+          root.browseMsg = root.str.badId
+        }
+      }
     }
   }
 
@@ -728,6 +767,31 @@ BarWidget {
               text: (index === 0 ? "" : "  ".repeat(index)) + "↳ " + modelData.label
               onClicked: root.goCrumb(modelData.path)
             }
+          }
+
+          TextField {
+            width: parent.width
+            placeholderText: root.str.folderIdPh
+            text: root.folderId
+            onTextChanged: root.folderId = text
+            font.family: Style.font.family
+            font.pixelSize: Style.font.caption
+          }
+
+          Button {
+            width: parent.width
+            text: root.str.openId
+            onClicked: root.openById()
+          }
+
+          Text {
+            visible: root.browseMsg !== ""
+            text: root.browseMsg
+            color: Color.foreground
+            font.family: Style.font.family
+            font.pixelSize: Style.font.caption
+            wrapMode: Text.WordWrap
+            width: parent.width
           }
         }
 

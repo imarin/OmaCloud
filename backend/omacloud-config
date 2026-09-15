@@ -145,6 +145,16 @@ for d in items:
         print(f\"{name}|OmaCloud,team_drive={d['id']},root_folder_id={d['id']}:\")
 " 2>/dev/null || true
     ;;
+  check-id)
+    # check-id ID -> OK si la carpeta es accesible (Computadoras, compartidas).
+    id="${2:-}"
+    [ -n "$id" ] || { echo "FAIL"; exit 1; }
+    if rclone lsf "OmaCloud,root_folder_id=${id}:" >/dev/null 2>&1; then
+      echo "OK"
+    else
+      echo "FAIL"
+    fi
+    ;;
   quit)
     # Cierre total: detiene y deshabilita mount + timer, desmonta ~/Drive
     # y mata restos de rclone. Reactivar con ./install.sh
