@@ -6,12 +6,16 @@
 #   set-keys      -> lee CLIENT_ID y CLIENT_SECRET por stdin (2 líneas);
 #                    imprime SAVED_OK | SAVED_NEEDS_AUTH | ERR_EMPTY
 #   quit           -> detiene todo (mount+timer), desmonta, imprime QUIT_OK
+#   add-pair R L   -> agrega par; ADDED | EXISTS
+#   remove-pair L  -> quita par por destino; REMOVED | NOTFOUND
+#   list-pairs     -> lista pares
 # Las claves nunca van por argv (visibles en `ps`): entran por stdin.
 set -u
 
 TIMER="$HOME/.config/systemd/user/omacloud-bisync.timer"
 ENV_FILE="$HOME/.config/omacloud/.env"
 CONF="$HOME/.config/rclone/rclone.conf"
+PAIRS_FILE="$HOME/.config/omacloud/pairs"
 
 cmd="${1:-}"
 case "$cmd" in
@@ -88,6 +92,36 @@ EOF
       echo "SAVED_NEEDS_AUTH"
     fi
     ;;
+  add-pair)
+    # add-pair REMOTE LOCAL (LOCAL admite ~)
+    remote="${2:-}"; ldir="${3:-}"
+    [ -n "$remote" ] && [ -n "$ldir" ] || { echo "ERR_ARGS"; exit 1; }
+    mkdir -p "$(dirname "$HOME/.config/omacloud/pairs")"
+    touch "$PAIRS_FILE"
+    if grep -qxF "$remote | $ldir" "$PAIRS_FILE"; then
+      echo "EXISTS"
+    else
+      printf '%s | %s\n' "$remote" "$ldir" >> "$PAIRS_FILE"
+      echo "ADDED"
+    fi
+    ;;
+  remove-pair)
+    # remove-pair LOCAL (tal cual aparece en el archivo)
+    ldir="${2:-}"
+    [ -n "$ldir" ] || { echo "ERR_ARGS"; exit 1; }
+    [ -f "$PAIRS_FILE" ] || { echo "NOTFOUND"; exit 1; }
+    if awk -F' \\| ' -v l="$ldir" '/^[[:space:]]*(#|$)/{print; next} NF==2 && $2==l{removed=1; next} {print} END{exit !removed}' "$PAIRS_FILE" > "$PAIRS_FILE.tmp"; then
+      mv "$PAIRS_FILE.tmp" "$PAIRS_FILE"
+      echo "REMOVED"
+    else
+      rm -f "$PAIRS_FILE.tmp"
+      echo "NOTFOUND"
+      exit 1
+    fi
+    ;;
+  list-pairs)
+    [ -f "$PAIRS_FILE" ] && grep -v '^[[:space:]]*#' "$PAIRS_FILE" | grep -v '^[[:space:]]*$' || true
+    ;;
   quit)
     # Cierre total: detiene y deshabilita mount + timer, desmonta ~/Drive
     # y mata restos de rclone. Reactivar con ./install.sh
@@ -98,7 +132,7 @@ EOF
     echo "QUIT_OK"
     ;;
   *)
-    echo "uso: get-interval | set-interval MINUTOS | set-keys | quit" >&2
+    echo "uso: get-interval | set-interval MINUTOS | set-keys | quit | add-pair | remove-pair | list-pairs" >&2
     exit 2
     ;;
 esac

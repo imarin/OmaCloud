@@ -42,6 +42,26 @@ systemctl --user enable --now omacloud-mount.service omacloud-bisync.timer
   opcionales (`OMACLOUD_REMOTE`, `OMACLOUD_REPLICA`). El wrapper los
   carga si el archivo existe.
 
+## Sync selectivo (pares)
+
+Por defecto se sincroniza el Drive completo. Con pares en
+`~/.config/omacloud/pairs` (una línea `REMOTE | LOCAL` por par) solo se
+sincronizan esas carpetas:
+
+```bash
+omacloud-config add-pair "OmaCloud:Proyectos" "~/Drive-sel/Proyectos"
+omacloud-config list-pairs
+omacloud-config remove-pair "~/Drive-sel/Proyectos"
+```
+
+- Archivo ausente o vacío = Drive completo (compatible hacia atrás).
+- Cada par nuevo corre `--resync` una sola vez (marcador en el state dir).
+- El estado publicado es el agregado (peor caso gana).
+- Carpetas de "Computadoras" (ej. respaldos de otra máquina): no aparecen
+  en el listado; usa el ID de su URL (`drive.google.com/drive/folders/<ID>`):
+  `OmaCloud,root_folder_id=<ID>: | ~/destino`.
+- El mount de `~/Drive` siempre muestra todo; lo selectivo aplica a la réplica.
+
 ## Notificaciones
 
 El wrapper avisa solo en cambios de estado (sin spam): error nuevo

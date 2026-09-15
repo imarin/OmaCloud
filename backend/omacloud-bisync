@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
-# OmaCloud: sincroniza la réplica local <-> Google Drive y publica estado.
-# Estado (contrato con el widget, ADR-002): $STATE_DIR/status.json
+# OmaCloud: sincroniza pares local <-> Drive y publica estado agregado.
+# Pares en ~/.config/omacloud/pairs, una línea por par:
+#   REMOTE_SPEC | LOCAL_DIR
+# Ejemplos:
+#   OmaCloud:Proyectos | ~/Drive-sel/Proyectos
+#   OmaCloud,root_folder_id=<ID>: | ~/MacBookPro   (carpetas de "Computadoras": ID de la URL)
+# Sin archivo: Drive completo <-> réplica (comportamiento original).
+# Cada par nuevo corre --resync una sola vez (marcador en STATE_DIR).
+# Estado agregado (contrato con el widget, ADR-002): $STATE_DIR/status.json
 #   {"status":"syncing|ok|error","last_sync":"...","last_error":"...","updated":"..."}
 set -u
 
@@ -11,6 +18,7 @@ set -u
 REMOTE="${OMACLOUD_REMOTE:-OmaCloud:}"
 REPLICA="${OMACLOUD_REPLICA:-${XDG_DATA_HOME:-$HOME/.local/share}/omacloud/replica}"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/omacloud"
+PAIRS_FILE="$HOME/.config/omacloud/pairs"
 STATUS="$STATE_DIR/status.json"
 LOG="$STATE_DIR/bisync.log"
 
@@ -42,17 +50,60 @@ write_status() { # $1=status, $2=last_error
     && mv "$STATUS.tmp" "$STATUS"
 }
 
+# Carga pares: arreglo de "remote|local".
+pairs=()
+if [ -f "$PAIRS_FILE" ]; then
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line#"${line%%[![:space:]]*}"}" # trim izq
+    [[ -z "$line" || "$line" == \#* || "$line" != *"|"* ]] && continue
+    pairs+=("$line")
+  done < "$PAIRS_FILE"
+fi
+[ "${#pairs[@]}" -eq 0 ] && pairs=("$REMOTE | $REPLICA")
+
+sync_pair() { # $1=remote, $2=ldir -> 0 ok, 1 error (imprime error por stdout)
+  local remote="$1" ldir="$2"
+  local tag
+  tag="$(basename "$ldir")"
+  mkdir -p "$ldir"
+  local marker="$STATE_DIR/resynced_$(printf '%s|%s' "$remote" "$ldir" | sha1sum | cut -d' ' -f1)"
+  local flags=()
+  if [ ! -f "$marker" ]; then
+    flags+=(--resync)
+  fi
+  if rclone bisync "$ldir" "$remote" "${flags[@]}" --log-file "$LOG" --log-file-max-age 7d >>"$LOG" 2>&1; then
+    touch "$marker"
+    return 0
+  fi
+  local err
+  err="$(grep -i -m1 -E 'error|abort|fail' "$LOG" | tail -c 250)"
+  printf '[%s] %s' "$tag" "$err"
+  return 1
+}
+
 write_status "syncing" ""
 
-if rclone bisync "$REPLICA" "$REMOTE" --log-file "$LOG" --log-file-max-age 7d >>"$LOG" 2>&1; then
+failed=""
+for p in "${pairs[@]}"; do
+  remote="${p%%|*}"; ldir="${p#*|}"
+  remote="${remote%"${remote##*[![:space:]]}"}" # trim der
+  ldir="${ldir#"${ldir%%[![:space:]]*}"}"   # trim izq
+  ldir="${ldir/#\~/$HOME}"                   # expande ~
+  if [ -z "$remote" ] || [ -z "$ldir" ]; then
+    failed="[par inválido] $p"
+    break
+  fi
+  err="$(sync_pair "$remote" "$ldir")" || { failed="$err"; break; }
+done
+
+if [ -z "$failed" ]; then
   LAST_SYNC="$(date -u +%FT%TZ)"
   write_status "ok" ""
-  # Avisa solo al recuperarse (evita spam cada 15 min).
+  # Avisa solo al recuperarse (evita spam cada ciclo).
   [ "${prev_status:-}" = "error" ] && notify normal "$N_OK"
 else
-  err="$(grep -i -m1 -E 'error|abort|fail' "$LOG" | tail -c 300)"
-  write_status "error" "$err"
+  write_status "error" "$failed"
   # Avisa solo al primer fallo; los siguientes ya están notificados.
-  [ "${prev_status:-}" = "error" ] || notify critical "$N_ERR" "$err"
+  [ "${prev_status:-}" = "error" ] || notify critical "$N_ERR" "$failed"
   exit 1
 fi
